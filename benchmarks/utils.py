@@ -1,8 +1,10 @@
 import uuid
-from typing import Dict, List
+from datetime import date
+from typing import Dict, List, Optional
 
 import duckdb
 import pyarrow as pa
+from pydantic import BaseModel
 
 SCHEMA_DEFINITION = [
     ("id", "INTEGER"),
@@ -115,15 +117,42 @@ ARROW_SCHEMA = pa.schema(
         pa.field("last_name", pa.string(), nullable=True),
         pa.field("id_3", pa.string(), nullable=True),
         pa.field("id_4", pa.string(), nullable=True),
-        pa.field("date_of_birth", pa.string(), nullable=True),
+        pa.field("date_of_birth", pa.date32(), nullable=True),
         pa.field("sex", pa.string(), nullable=True),
         pa.field("ethnicity", pa.string(), nullable=True),
         pa.field("first_name_alias_arr", pa.list_(pa.string()), nullable=True),
         pa.field("last_name_alias_arr", pa.list_(pa.string()), nullable=True),
-        pa.field("date_of_birth_alias_arr", pa.list_(pa.string()), nullable=True),
+        pa.field("date_of_birth_alias_arr", pa.list_(pa.date32()), nullable=True),
         pa.field("postcode_arr", pa.list_(pa.string()), nullable=True),
         pa.field("id1_arr", pa.list_(pa.string()), nullable=True),
         pa.field("id2_arr", pa.list_(pa.string()), nullable=True),
-        pa.field("date_arr", pa.list_(pa.string()), nullable=True),
+        pa.field("date_arr", pa.list_(pa.date32()), nullable=True),
     ]
 )
+
+
+class PersonRecord(BaseModel):
+    id: int
+    source_system: str
+    first_name: str
+    middle_names: Optional[str]
+    last_name: str
+    id_3: Optional[str]
+    id_4: Optional[str]
+    date_of_birth: date
+    sex: Optional[str]
+    ethnicity: Optional[str]
+    first_name_alias_arr: Optional[List[str]]
+    last_name_alias_arr: Optional[List[str]]
+    date_of_birth_alias_arr: Optional[List[date]]
+    postcode_arr: Optional[List[str]]
+    id1_arr: Optional[List[str]]
+    id2_arr: Optional[List[str]]
+    date_arr: Optional[List[date]]
+
+
+PYDANTIC_TEST_RECORDS = [PersonRecord(**record) for record in TEST_RECORDS]
+
+PYDANTIC_TEST_RECORDS_AS_DICTS = [
+    record.model_dump() for record in PYDANTIC_TEST_RECORDS
+]
