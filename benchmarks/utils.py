@@ -67,6 +67,18 @@ def insert_records_arrow(con: duckdb.DuckDBPyConnection, records: List[Dict]):
     return f"r1_{myuuid}", f"r2_{myuuid}"
 
 
+def insert_records_pandas(con: duckdb.DuckDBPyConnection, records: List[Dict]):
+    myuuid = str(uuid.uuid4())[:8]
+    import pandas as pd
+
+    df = pd.DataFrame(records)
+
+    con.execute(f"CREATE TABLE r1_{myuuid} AS SELECT * FROM df LIMIT 1")
+    con.execute(f"CREATE TABLE r2_{myuuid} AS SELECT * FROM df LIMIT 1 OFFSET 1")
+
+    return f"r1_{myuuid}", f"r2_{myuuid}"
+
+
 TEST_RECORDS = [
     {
         "id": 1200000,

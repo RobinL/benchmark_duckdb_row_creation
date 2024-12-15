@@ -11,6 +11,7 @@ from benchmarks.utils import (
     TEST_RECORDS,
     insert_records_arrow,
     insert_records_individually,
+    insert_records_pandas,
 )
 
 
@@ -56,6 +57,20 @@ def test_pydantic_inserts(benchmark):
         con.execute(f"CREATE TABLE r2_{myuuid} AS SELECT * FROM t2")
 
         return f"r1_{myuuid}", f"r2_{myuuid}"
+
+    def setup():
+        return (), {}
+
+    benchmark.pedantic(
+        run_insert, setup=setup, rounds=30, iterations=1, warmup_rounds=1
+    )
+
+
+def test_pandas_inserts(benchmark):
+    con = duckdb.connect()
+
+    def run_insert(con=con, records=TEST_RECORDS):
+        insert_records_pandas(con, records)
 
     def setup():
         return (), {}
