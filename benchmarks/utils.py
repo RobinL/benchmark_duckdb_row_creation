@@ -78,7 +78,34 @@ def insert_records_pandas(con: duckdb.DuckDBPyConnection, records: List[Dict]):
 
     return f"r1_{myuuid}", f"r2_{myuuid}"
 
+def insert_records_individually_non_parameterised(con: duckdb.DuckDBPyConnection, records: List[Dict]):
+    myuuid = str(uuid.uuid4())[:8]
+    table_name = f"df_raw_{myuuid}"
 
+    con.execute(CREATE_TABLE_SQL.format(table_name))
+
+    def format_value(val, type_):
+        if val is None:
+            return 'NULL'
+        if type_.endswith('[]'):
+            if not val:  # empty list or None
+                return 'NULL'
+            return f"[{','.join(repr(v) for v in val)}]"
+        return repr(val)
+
+    values_str = ",".join(
+        f"({','.join(format_value(record[c], t) for c, t in SCHEMA_DEFINITION)})"
+        for record in records
+    )
+    query = f"INSERT INTO {table_name} VALUES {values_str}"
+    con.execute(query)
+
+    con.execute(f"CREATE TABLE r1_{myuuid} AS SELECT * FROM {table_name} LIMIT 1")
+    con.execute(
+        f"CREATE TABLE r2_{myuuid} AS SELECT * FROM {table_name} LIMIT 1 OFFSET 1"
+    )
+
+    return f"r1_{myuuid}", f"r2_{myuuid}"
 TEST_RECORDS = [
     {
         "id": 1200000,
